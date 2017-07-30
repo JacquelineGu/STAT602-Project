@@ -1,0 +1,1415 @@
+---
+title: "Part2"
+author: "Shurong Gu"
+date: "2017/5/11"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(dplyr)
+library(car)
+library(leaps)
+library(faraway)
+library(MASS)
+library(glmnet)
+
+load("~/Google 云端硬盘/602 project/new_e.Rdata")
+load("~/Google 云端硬盘/602 project/new_o.Rdata")
+load("~/Google 云端硬盘/602 project/TP53_e.Rdata")
+load("~/Google 云端硬盘/602 project/TP53_o.Rdata")
+
+data_e<-data_e[-467,]
+data_o<-data_o[-467,]
+
+data_e[,-1]<-scale(data_e[,-1])
+data_o[,-1]<-scale(data_o[,-1])
+TP53_e[,-1]<-scale(TP53_e[,-1])
+TP53_o[,-1]<-scale(TP53_o[,-1])
+
+source("GMC.R")
+```
+
+##Set_e
+###g(x)=x 
+```{r}
+lambda1=seq(0.001,0.009,0.001) 
+lambda2 = seq(0.01,0.09,0.01)
+lm.nointer = lm(response ~., data =data_e)
+beta.start=as.vector(coef(lm.nointer))
+X=model.matrix(lm.nointer)
+X = X ###################X^3, cos(X), sin(X) 
+for(i in 1:length(lambda1)){
+  for(j in 1: length(lambda2)){ 
+    f<- function(beta){
+      gx = (X%*%beta)
+      e = data_e$response-gx
+      ff = var(gx)/(var(gx)+var(e) ) - lambda1[i]*abs(cov(gx, e))-lambda2[j]*sum(abs(beta)) 
+      return(-ff)
+    }
+  o=optim(par=beta.start,f,method="L-BFGS-B")
+  ind.order = order(o$par,decreasing = T)
+  ind.final = ind.order[1:10]
+  X.gmc = X[,ind.final]
+  beta.gmc = o$par[ind.final]
+  gx.gmc = X.gmc%*%beta.gmc
+  data.gmc = cbind(gx.gmc,data_e$response)
+  cat(sep = "", "lambda1= ", lambda1[i], " lambda2= ", lambda2[j]) 
+  print(names(coef(lm.nointer)[ind.final]))
+  print(GMC(data.gmc))
+  }
+}
+#lambda1= 0.001 lambda2= 0.01 [1] "(Intercept)" "HPCA"        "MYLPF"       "PYY"         "SOX2"        "SPINK1"      "TMEM30A"    
+#[8] "CEL"         "HABP2"       "TMEFF1"     
+#[1] 0.3219978 0.1926605
+```
+
+###$g(x)=exp(x)$ 
+```{r}
+lambda1=seq(0.001,0.009,0.001) 
+lambda2 = seq(0.01,0.09,0.01)
+lm.nointer = lm(response ~., data =data_e)
+beta.start=as.vector(coef(lm.nointer))
+X=model.matrix(lm.nointer)
+X = exp(X) ###################X^3, cos(X), sin(X) 
+for(i in 1:length(lambda1)){
+  for(j in 1: length(lambda2)){ 
+    f<- function(beta){
+      gx = (X%*%beta)
+      e = data_e$response-gx
+      ff = var(gx)/(var(gx)+var(e) ) - lambda1[i]*abs(cov(gx, e))-lambda2[j]*sum(abs(beta)) 
+      return(-ff)
+    }
+  o=optim(par=beta.start,f,method="L-BFGS-B")
+  ind.order = order(o$par,decreasing = T)
+  ind.final = ind.order[1:10]
+  X.gmc = X[,ind.final]
+  beta.gmc = o$par[ind.final]
+  gx.gmc = X.gmc%*%beta.gmc
+  data.gmc = cbind(gx.gmc,data_e$response)
+  cat(sep = "", "lambda1= ", lambda1[i], " lambda2= ", lambda2[j]) 
+  print(names(coef(lm.nointer)[ind.final]))
+  print(GMC(data.gmc))
+  }
+}
+#lambda1= 0.001 lambda2= 0.03 [1] "(Intercept)" "TMEM30A"     "TMEFF1"      "UBXD8"       "CDKN2AIP"    "ACCN1"       "RB1CC1"     
+#[8] "BTG1"        "SOX2"        "CADM3"      
+#[1] 0.8565436 0.1858465
+```
+###$g(x)=x^3$ 
+```{r}
+lambda1=seq(0.001,0.009,0.001) 
+lambda2 = seq(0.01,0.09,0.01)
+lm.nointer = lm(response ~., data =data_e)
+beta.start=as.vector(coef(lm.nointer))
+X=model.matrix(lm.nointer)
+X = X^3 ###################X^3, cos(X), sin(X) 
+for(i in 1:length(lambda1)){
+  for(j in 1: length(lambda2)){ 
+    f<- function(beta){
+      gx = (X%*%beta)
+      e = data_e$response-gx
+      ff = var(gx)/(var(gx)+var(e) ) - lambda1[i]*abs(cov(gx, e))-lambda2[j]*sum(abs(beta)) 
+      return(-ff)
+    }
+  o=optim(par=beta.start,f,method="L-BFGS-B")
+  ind.order = order(o$par,decreasing = T)
+  ind.final = ind.order[1:10]
+  X.gmc = X[,ind.final]
+  beta.gmc = o$par[ind.final]
+  gx.gmc = X.gmc%*%beta.gmc
+  data.gmc = cbind(gx.gmc,data_e$response)
+  cat(sep = "", "lambda1= ", lambda1[i], " lambda2= ", lambda2[j]) 
+  print(names(coef(lm.nointer)[ind.final]))
+  print(GMC(data.gmc))
+  }
+}
+
+#lambda1= 0.001 lambda2= 0.07 [1] "(Intercept)" "TMEFF1"      "CEBPA"       "CADM3"       "UBXD8"       "AHI1"        "TRIM36"     
+#[8] "CEL"         "HPCA"        "SPINK1"     
+#[1] 0.6707302 0.1492801
+```
+
+###$g(x)=\frac1x$
+```{r}
+lambda1=seq(0.001,0.009,0.001) 
+lambda2 = seq(0.01,0.09,0.01)
+lm.nointer = lm(response ~., data =data_e)
+beta.start=as.vector(coef(lm.nointer))
+X=model.matrix(lm.nointer)
+X = 1/X ###################X^3, cos(X), sin(X) 
+for(i in 1:length(lambda1)){
+  for(j in 1: length(lambda2)){ 
+    f<- function(beta){
+      gx = (X%*%beta)
+      e = data_e$response-gx
+      ff = var(gx)/(var(gx)+var(e) ) - lambda1[i]*abs(cov(gx, e))-lambda2[j]*sum(abs(beta)) 
+      return(-ff)
+    }
+  o=optim(par=beta.start,f,method="L-BFGS-B")
+  ind.order = order(o$par,decreasing = T)
+  ind.final = ind.order[1:10]
+  X.gmc = X[,ind.final]
+  beta.gmc = o$par[ind.final]
+  gx.gmc = X.gmc%*%beta.gmc
+  data.gmc = cbind(gx.gmc,data_e$response)
+  cat(sep = "", "lambda1= ", lambda1[i], " lambda2= ", lambda2[j]) 
+  print(names(coef(lm.nointer)[ind.final]))
+  print(GMC(data.gmc))
+  }
+}
+#lambda1= 0.002 lambda2= 0.04 [1] "(Intercept)" "TMEM30A"     "TMED1"       "HABP2"       "CEBPA"       "UBXD8"       "RB1CC1"     
+#[8] "CADM3"       "SOX2"        "PYY"        
+#[1] 0.34163173 0.05881974
+```
+###$g(x)=x^2$
+```{r}
+lambda1=seq(0.001,0.009,0.001) 
+lambda2 = seq(0.01,0.09,0.01)
+lm.nointer = lm(response ~., data =data_e)
+beta.start=as.vector(coef(lm.nointer))
+X=model.matrix(lm.nointer)
+X = X^2 ###################X^3, cos(X), sin(X) 
+for(i in 1:length(lambda1)){
+  for(j in 1: length(lambda2)){ 
+    f<- function(beta){
+      gx = (X%*%beta)
+      e = data_e$response-gx
+      ff = var(gx)/(var(gx)+var(e) ) - lambda1[i]*abs(cov(gx, e))-lambda2[j]*sum(abs(beta)) 
+      return(-ff)
+    }
+  o=optim(par=beta.start,f,method="L-BFGS-B")
+  ind.order = order(o$par,decreasing = T)
+  ind.final = ind.order[1:10]
+  X.gmc = X[,ind.final]
+  beta.gmc = o$par[ind.final]
+  gx.gmc = X.gmc%*%beta.gmc
+  data.gmc = cbind(gx.gmc,data_e$response)
+  cat(sep = "", "lambda1= ", lambda1[i], " lambda2= ", lambda2[j]) 
+  print(names(coef(lm.nointer)[ind.final]))
+  print(GMC(data.gmc))
+  }
+}
+#lambda1= 0.001 lambda2= 0.08 [1] "(Intercept)" "SPINK1"      "DUSP8"       "SOX2"        "TRIM36"      "CEL"         "HABP2"      
+# [8] "CADM3"       "MYLPF"       "HOXC10"     
+#[1] 0.53480575 0.03192162
+```
+###final model
+```{r}
+
+finalmodel1<-lm(data_e$response~exp(data_e$TMEFF1)+exp(data_e$CEBPA)+exp(data_e$CADM3)+exp(data_e$UBXD8)+exp(data_e$AHI1)+exp(data_e$TRIM36)+exp(data_e$HPCA)+exp(data_e$CEL)+exp(data_e$SPINK1))
+summary(finalmodel1)
+plot(finalmodel1)
+```
+
+
+
+
+
+##Set_o
+###g(x)=x 
+```{r}
+lambda1=seq(0.001,0.009,0.001) 
+lambda2 = seq(0.01,0.09,0.01)
+lm.nointer = lm(response ~., data =data_o)
+beta.start=as.vector(coef(lm.nointer))
+X=model.matrix(lm.nointer)
+X = X ###################X^3, cos(X), sin(X) 
+for(i in 1:length(lambda1)){
+  for(j in 1: length(lambda2)){ 
+    f<- function(beta){
+      gx = (X%*%beta)
+      e = data_o$response-gx
+      ff = var(gx)/(var(gx)+var(e) ) - lambda1[i]*abs(cov(gx, e))-lambda2[j]*sum(abs(beta)) 
+      return(-ff)
+    }
+  o=optim(par=beta.start,f,method="L-BFGS-B")
+  ind.order = order(o$par,decreasing = T)
+  ind.final = ind.order[1:10]
+  X.gmc = X[,ind.final]
+  beta.gmc = o$par[ind.final]
+  gx.gmc = X.gmc%*%beta.gmc
+  data.gmc = cbind(gx.gmc,data_o$response)
+  cat(sep = "", "lambda1= ", lambda1[i], " lambda2= ", lambda2[j]) 
+  print(names(coef(lm.nointer)[ind.final]))
+  print(GMC(data.gmc))
+  }
+}
+#lambda1= 0.001 lambda2= 0.01 [1] "(Intercept)" "ITIH1"       "UGDH"        "PYY"         "GJA8"        "GGT1"        "SDK2"       
+#[8] "SPINK1"      "CADM3"       "SLC25A23"   
+#[1] 0.2857913 0.2260529
+```
+
+###$g(x)=exp(x)$ 
+```{r}
+lambda1=seq(0.001,0.009,0.001) 
+lambda2 = seq(0.01,0.09,0.01)
+lm.nointer = lm(response ~., data =data_o)
+beta.start=as.vector(coef(lm.nointer))
+X=model.matrix(lm.nointer)
+X = exp(X) ###################X^3, cos(X), sin(X) 
+for(i in 1:length(lambda1)){
+  for(j in 1: length(lambda2)){ 
+    f<- function(beta){
+      gx = (X%*%beta)
+      e = data_o$response-gx
+      ff = var(gx)/(var(gx)+var(e) ) - lambda1[i]*abs(cov(gx, e))-lambda2[j]*sum(abs(beta)) 
+      return(-ff)
+    }
+  o=optim(par=beta.start,f,method="L-BFGS-B")
+  ind.order = order(o$par,decreasing = T)
+  ind.final = ind.order[1:10]
+  X.gmc = X[,ind.final]
+  beta.gmc = o$par[ind.final]
+  gx.gmc = X.gmc%*%beta.gmc
+  data.gmc = cbind(gx.gmc,data_o$response)
+  cat(sep = "", "lambda1= ", lambda1[i], " lambda2= ", lambda2[j]) 
+  print(names(coef(lm.nointer)[ind.final]))
+  print(GMC(data.gmc))
+  }
+}
+#lambda1= 0.001 lambda2= 0.06 [1] "(Intercept)" "ITIH1"       "UGDH"        "GGT1"        "SDK2"        "SLC25A23"    "RAD1"       
+#[8] "GSN"         "CADM3"       "TGDS"       
+#[1] 0.8804978 0.2555123
+```
+###$g(x)=x^3$ 
+```{r}
+lambda1=seq(0.001,0.009,0.001) 
+lambda2 = seq(0.01,0.09,0.01)
+lm.nointer = lm(response ~., data =data_o)
+beta.start=as.vector(coef(lm.nointer))
+X=model.matrix(lm.nointer)
+X = X^3 ###################X^3, cos(X), sin(X) 
+for(i in 1:length(lambda1)){
+  for(j in 1: length(lambda2)){ 
+    f<- function(beta){
+      gx = (X%*%beta)
+      e = data_o$response-gx
+      ff = var(gx)/(var(gx)+var(e) ) - lambda1[i]*abs(cov(gx, e))-lambda2[j]*sum(abs(beta)) 
+      return(-ff)
+    }
+  o=optim(par=beta.start,f,method="L-BFGS-B")
+  ind.order = order(o$par,decreasing = T)
+  ind.final = ind.order[1:10]
+  X.gmc = X[,ind.final]
+  beta.gmc = o$par[ind.final]
+  gx.gmc = X.gmc%*%beta.gmc
+  data.gmc = cbind(gx.gmc,data_o$response)
+  cat(sep = "", "lambda1= ", lambda1[i], " lambda2= ", lambda2[j]) 
+  print(names(coef(lm.nointer)[ind.final]))
+  print(GMC(data.gmc))
+  }
+}
+
+#lambda1= 0.001 lambda2= 0.09 [1] "(Intercept)" "UGDH"        "PROP1"       "GSN"         "ITIH1"       "FNDC4"       "CHORDC1"    
+#[8] "SPINK1"      "C16orf45"    "SLC25A23"   
+#[1] 0.5645333 0.1169975
+```
+
+###$g(x)=\frac1x$
+```{r}
+lambda1=seq(0.001,0.009,0.001) 
+lambda2 = seq(0.01,0.09,0.01)
+lm.nointer = lm(response ~., data =data_o)
+beta.start=as.vector(coef(lm.nointer))
+X=model.matrix(lm.nointer)
+X = 1/X ###################X^3, cos(X), sin(X) 
+for(i in 1:length(lambda1)){
+  for(j in 1: length(lambda2)){ 
+    f<- function(beta){
+      gx = (X%*%beta)
+      e = data_o$response-gx
+      ff = var(gx)/(var(gx)+var(e) ) - lambda1[i]*abs(cov(gx, e))-lambda2[j]*sum(abs(beta)) 
+      return(-ff)
+    }
+  o=optim(par=beta.start,f,method="L-BFGS-B")
+  ind.order = order(o$par,decreasing = T)
+  ind.final = ind.order[1:10]
+  X.gmc = X[,ind.final]
+  beta.gmc = o$par[ind.final]
+  gx.gmc = X.gmc%*%beta.gmc
+  data.gmc = cbind(gx.gmc,data_o$response)
+  cat(sep = "", "lambda1= ", lambda1[i], " lambda2= ", lambda2[j]) 
+  print(names(coef(lm.nointer)[ind.final]))
+  print(GMC(data.gmc))
+  }
+}
+#lambda1= 0.004 lambda2= 0.09 [1] "(Intercept)" "ITIH1"       "PRRX2"       "NSD1"        "CADM3"       "FLG"         "PROP1"      
+#[8] "KIAA1045"    "SCGB1A1"     "HABP2"      
+#[1] 0.1549866 0.1273548
+```
+###$g(x)=x^2$
+```{r}
+lambda1=seq(0.001,0.009,0.001) 
+lambda2 = seq(0.01,0.09,0.01)
+lm.nointer = lm(response ~., data =data_o)
+beta.start=as.vector(coef(lm.nointer))
+X=model.matrix(lm.nointer)
+X = X^2 ###################X^3, cos(X), sin(X) 
+for(i in 1:length(lambda1)){
+  for(j in 1: length(lambda2)){ 
+    f<- function(beta){
+      gx = (X%*%beta)
+      e = data_o$response-gx
+      ff = var(gx)/(var(gx)+var(e) ) - lambda1[i]*abs(cov(gx, e))-lambda2[j]*sum(abs(beta)) 
+      return(-ff)
+    }
+  o=optim(par=beta.start,f,method="L-BFGS-B")
+  ind.order = order(o$par,decreasing = T)
+  ind.final = ind.order[1:10]
+  X.gmc = X[,ind.final]
+  beta.gmc = o$par[ind.final]
+  gx.gmc = X.gmc%*%beta.gmc
+  data.gmc = cbind(gx.gmc,data_o$response)
+  cat(sep = "", "lambda1= ", lambda1[i], " lambda2= ", lambda2[j]) 
+  print(names(coef(lm.nointer)[ind.final]))
+  print(GMC(data.gmc))
+  }
+}
+#lambda1= 0.001 lambda2= 0.06 [1] "(Intercept)" "SPINK1"      "ITIH1"       "KIAA1045"    "NR0B2"       "NSD1"        "CEL"        
+#[8] "CAMK2G"      "NUPL2"       "CHORDC1"    
+#[1] 0.58386921 0.02855815
+```
+###final model
+```{r}
+finalmodel2<-lm(data_o$response~exp(data_o$ITIH1)+exp(data_o$UGDH)+exp(data_o$GGT1)+exp(data_o$SDK2)+exp(data_o$SLC25A23)+exp(data_o$RAD1)+exp(data_o$GSN)+exp(data_o$CADM3)+exp(data_o$TGDS))
+summary(finalmodel2)
+plot(finalmodel2)
+```
+
+
+
+
+
+##TP53 Set_e
+###g(x)=x 
+```{r}
+lambda1=seq(0.001,0.009,0.001) 
+lambda2 = seq(0.01,0.09,0.01)
+lm.nointer = lm(response ~., data =TP53_e)
+beta.start=as.vector(coef(lm.nointer))
+X=model.matrix(lm.nointer)
+X = X ###################X^3, cos(X), sin(X) 
+for(i in 1:length(lambda1)){
+  for(j in 1: length(lambda2)){ 
+    f<- function(beta){
+      gx = (X%*%beta)
+      e = TP53_e$response-gx
+      ff = var(gx)/(var(gx)+var(e) ) - lambda1[i]*abs(cov(gx, e))-lambda2[j]*sum(abs(beta)) 
+      return(-ff)
+    }
+  o=optim(par=beta.start,f,method="L-BFGS-B")
+  ind.order = order(o$par,decreasing = T)
+  ind.final = ind.order[1:10]
+  X.gmc = X[,ind.final]
+  beta.gmc = o$par[ind.final]
+  gx.gmc = X.gmc%*%beta.gmc
+  data.gmc = cbind(gx.gmc,TP53_e$response)
+  cat(sep = "", "lambda1= ", lambda1[i], " lambda2= ", lambda2[j]) 
+  print(names(coef(lm.nointer)[ind.final]))
+  print(GMC(data.gmc))
+  }
+}
+#lambda1= 0.008 lambda2= 0.01 [1] "TMEM87A"  "HIST1H4I" "IFT122"   "CWF19L1"  "FGFR1OP"  "KIAA0556" "CTCF"     "NAG"      "STAT5B"  
+#[10] "BTG1"    
+#[1] 0.2126656 0.1610482
+```
+
+###$g(x)=exp(x)$ 
+```{r}
+lambda1=seq(0.001,0.009,0.001) 
+lambda2 = seq(0.01,0.09,0.01)
+lm.nointer = lm(response ~., data =TP53_e)
+beta.start=as.vector(coef(lm.nointer))
+X=model.matrix(lm.nointer)
+X = exp(X) ###################X^3, cos(X), sin(X) 
+for(i in 1:length(lambda1)){
+  for(j in 1: length(lambda2)){ 
+    f<- function(beta){
+      gx = (X%*%beta)
+      e = TP53_e$response-gx
+      ff = var(gx)/(var(gx)+var(e) ) - lambda1[i]*abs(cov(gx, e))-lambda2[j]*sum(abs(beta)) 
+      return(-ff)
+    }
+  o=optim(par=beta.start,f,method="L-BFGS-B")
+  ind.order = order(o$par,decreasing = T)
+  ind.final = ind.order[1:10]
+  X.gmc = X[,ind.final]
+  beta.gmc = o$par[ind.final]
+  gx.gmc = X.gmc%*%beta.gmc
+  data.gmc = cbind(gx.gmc,TP53_e$response)
+  cat(sep = "", "lambda1= ", lambda1[i], " lambda2= ", lambda2[j]) 
+  print(names(coef(lm.nointer)[ind.final]))
+  print(GMC(data.gmc))
+  }
+}
+#lambda1= 0.004 lambda2= 0.01 [1] "TMEM87A"  "FGFR1OP"  "ABCF1"    "KIAA0556" "CTCF"     "EXOSC5"   "HIST1H4I" "RBBP5"    "NAG"     
+#[10] "IFT122"  
+#[1] 0.1777479 0.1185782
+```
+###$g(x)=x^3$ 
+```{r}
+lambda1=seq(0.001,0.009,0.001) 
+lambda2 = seq(0.01,0.09,0.01)
+lm.nointer = lm(response ~., data =TP53_e)
+beta.start=as.vector(coef(lm.nointer))
+X=model.matrix(lm.nointer)
+X = X^3 ###################X^3, cos(X), sin(X) 
+for(i in 1:length(lambda1)){
+  for(j in 1: length(lambda2)){ 
+    f<- function(beta){
+      gx = (X%*%beta)
+      e = TP53_e$response-gx
+      ff = var(gx)/(var(gx)+var(e) ) - lambda1[i]*abs(cov(gx, e))-lambda2[j]*sum(abs(beta)) 
+      return(-ff)
+    }
+  o=optim(par=beta.start,f,method="L-BFGS-B")
+  ind.order = order(o$par,decreasing = T)
+  ind.final = ind.order[1:10]
+  X.gmc = X[,ind.final]
+  beta.gmc = o$par[ind.final]
+  gx.gmc = X.gmc%*%beta.gmc
+  data.gmc = cbind(gx.gmc,TP53_e$response)
+  cat(sep = "", "lambda1= ", lambda1[i], " lambda2= ", lambda2[j]) 
+  print(names(coef(lm.nointer)[ind.final]))
+  print(GMC(data.gmc))
+  }
+}
+
+#lambda1= 0.009 lambda2= 0.01 [1] "FGFR1OP"  "KIAA0556" "TMEM87A"  "RBBP5"    "HIST1H4I" "C16orf58" "EXOSC5"   "CTCF"     "CWF19L1" 
+#[10] "IFT122"  
+#[1] 0.1609107 0.1178359
+```
+
+###$g(x)=\frac1x$
+```{r}
+lambda1=seq(0.001,0.009,0.001) 
+lambda2 = seq(0.01,0.09,0.01)
+lm.nointer = lm(response ~., data =TP53_e)
+beta.start=as.vector(coef(lm.nointer))
+X=model.matrix(lm.nointer)
+X = 1/X ###################X^3, cos(X), sin(X) 
+for(i in 1:length(lambda1)){
+  for(j in 1: length(lambda2)){ 
+    f<- function(beta){
+      gx = (X%*%beta)
+      e = TP53_e$response-gx
+      ff = var(gx)/(var(gx)+var(e) ) - lambda1[i]*abs(cov(gx, e))-lambda2[j]*sum(abs(beta)) 
+      return(-ff)
+    }
+  o=optim(par=beta.start,f,method="L-BFGS-B")
+  ind.order = order(o$par,decreasing = T)
+  ind.final = ind.order[1:10]
+  X.gmc = X[,ind.final]
+  beta.gmc = o$par[ind.final]
+  gx.gmc = X.gmc%*%beta.gmc
+  data.gmc = cbind(gx.gmc,TP53_e$response)
+  cat(sep = "", "lambda1= ", lambda1[i], " lambda2= ", lambda2[j]) 
+  print(names(coef(lm.nointer)[ind.final]))
+  print(GMC(data.gmc))
+  }
+}
+#lambda1= 0.009 lambda2= 0.09 [1] "(Intercept)" "ABCF1"       "AHI1"        "RBM4"        "TMEM30A"     "NAG"         "KIAA0556"   
+#[8] "ZBTB5"       "C16orf58"    "TMEM87A"    
+#[1] 0.03477509 0.04245995
+```
+###$g(x)=x^2$
+```{r}
+lambda1=seq(0.001,0.009,0.001) 
+lambda2 = seq(0.01,0.09,0.01)
+lm.nointer = lm(response ~., data =TP53_e)
+beta.start=as.vector(coef(lm.nointer))
+X=model.matrix(lm.nointer)
+X = X^2 ###################X^3, cos(X), sin(X) 
+for(i in 1:length(lambda1)){
+  for(j in 1: length(lambda2)){ 
+    f<- function(beta){
+      gx = (X%*%beta)
+      e = TP53_e$response-gx
+      ff = var(gx)/(var(gx)+var(e) ) - lambda1[i]*abs(cov(gx, e))-lambda2[j]*sum(abs(beta)) 
+      return(-ff)
+    }
+  o=optim(par=beta.start,f,method="L-BFGS-B")
+  ind.order = order(o$par,decreasing = T)
+  ind.final = ind.order[1:10]
+  X.gmc = X[,ind.final]
+  beta.gmc = o$par[ind.final]
+  gx.gmc = X.gmc%*%beta.gmc
+  data.gmc = cbind(gx.gmc,TP53_e$response)
+  cat(sep = "", "lambda1= ", lambda1[i], " lambda2= ", lambda2[j]) 
+  print(names(coef(lm.nointer)[ind.final]))
+  print(GMC(data.gmc))
+  }
+}
+#lambda1= 0.009 lambda2= 0.01 [1] "FGFR1OP"  "SLC7A4"   "STAT5B"   "RGL2"     "RBBP5"    "IFT122"   "KIAA0556" "NFYC"     "NAG"     
+#[10] "GPRASP1" 
+#[1] 0.08718180 0.07001205
+```
+###final model
+```{r}
+finalmodel3<-lm(TP53_e$response~TP53_e$TMEM87A+TP53_e$HIST1H4I+TP53_e$IFT122+TP53_e$CWF19L1+TP53_e$FGFR1OP+TP53_e$KIAA0556+TP53_e$CTCF+TP53_e$NAG+TP53_e$STAT5B+TP53_e$BTG1)
+summary(finalmodel3)
+plot(finalmodel3)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+##TP53 Set_o
+###g(x)=x 
+```{r}
+lambda1=seq(0.001,0.009,0.001) 
+lambda2 = seq(0.01,0.09,0.01)
+lm.nointer = lm(response ~., data =TP53_o)
+beta.start=as.vector(coef(lm.nointer))
+X=model.matrix(lm.nointer)
+X = X ###################X^3, cos(X), sin(X) 
+for(i in 1:length(lambda1)){
+  for(j in 1: length(lambda2)){ 
+    f<- function(beta){
+      gx = (X%*%beta)
+      e = TP53_o$response-gx
+      ff = var(gx)/(var(gx)+var(e) ) - lambda1[i]*abs(cov(gx, e))-lambda2[j]*sum(abs(beta)) 
+      return(-ff)
+    }
+  o=optim(par=beta.start,f,method="L-BFGS-B")
+  ind.order = order(o$par,decreasing = T)
+  ind.final = ind.order[1:10]
+  X.gmc = X[,ind.final]
+  beta.gmc = o$par[ind.final]
+  gx.gmc = X.gmc%*%beta.gmc
+  data.gmc = cbind(gx.gmc,TP53_o$response)
+  cat(sep = "", "lambda1= ", lambda1[i], " lambda2= ", lambda2[j]) 
+  print(names(coef(lm.nointer)[ind.final]))
+  print(GMC(data.gmc))
+  }
+}
+#lambda1= 0.007 lambda2= 0.01 [1] "JMJD3"   "MYH9"    "NUP88"   "PDK2"    "TMEM5"   "KCTD5"   "SNRPC"   "RYK"     "CASP2"   "UNC119B"
+#[1] 0.2783180 0.1280649
+```
+
+###$g(x)=exp(x)$ 
+```{r}
+lambda1=seq(0.001,0.009,0.001) 
+lambda2 = seq(0.01,0.09,0.01)
+lm.nointer = lm(response ~., data =TP53_o)
+beta.start=as.vector(coef(lm.nointer))
+X=model.matrix(lm.nointer)
+X = sin(X) ###################X^3, cos(X), sin(X) 
+for(i in 1:length(lambda1)){
+  for(j in 1: length(lambda2)){ 
+    f<- function(beta){
+      gx = (X%*%beta)
+      e = TP53_o$response-gx
+      ff = var(gx)/(var(gx)+var(e) ) - lambda1[i]*abs(cov(gx, e))-lambda2[j]*sum(abs(beta)) 
+      return(-ff)
+    }
+  o=optim(par=beta.start,f,method="L-BFGS-B")
+  ind.order = order(o$par,decreasing = T)
+  ind.final = ind.order[1:10]
+  X.gmc = X[,ind.final]
+  beta.gmc = o$par[ind.final]
+  gx.gmc = X.gmc%*%beta.gmc
+  data.gmc = cbind(gx.gmc,TP53_o$response)
+  cat(sep = "", "lambda1= ", lambda1[i], " lambda2= ", lambda2[j]) 
+  print(names(coef(lm.nointer)[ind.final]))
+  print(GMC(data.gmc))
+  }
+}
+#lambda1= 0.001 lambda2= 0.06 [1] "JMJD3"    "MRPS18A"  "C17orf71" "NUP88"    "BTBD3"    "PIK3R4"   "SNRPC"    "TMEM5"    "CACNB3"  
+#[10] "RYK"     
+#[1] 0.2738609 0.1022681
+```
+###$g(x)=x^3$ 
+```{r}
+lambda1=seq(0.001,0.009,0.001) 
+lambda2 = seq(0.01,0.09,0.01)
+lm.nointer = lm(response ~., data =TP53_o)
+beta.start=as.vector(coef(lm.nointer))
+X=model.matrix(lm.nointer)
+X = X^3 ###################X^3, cos(X), sin(X) 
+for(i in 1:length(lambda1)){
+  for(j in 1: length(lambda2)){ 
+    f<- function(beta){
+      gx = (X%*%beta)
+      e = TP53_o$response-gx
+      ff = var(gx)/(var(gx)+var(e) ) - lambda1[i]*abs(cov(gx, e))-lambda2[j]*sum(abs(beta)) 
+      return(-ff)
+    }
+  o=optim(par=beta.start,f,method="L-BFGS-B")
+  ind.order = order(o$par,decreasing = T)
+  ind.final = ind.order[1:10]
+  X.gmc = X[,ind.final]
+  beta.gmc = o$par[ind.final]
+  gx.gmc = X.gmc%*%beta.gmc
+  data.gmc = cbind(gx.gmc,TP53_o$response)
+  cat(sep = "", "lambda1= ", lambda1[i], " lambda2= ", lambda2[j]) 
+  print(names(coef(lm.nointer)[ind.final]))
+  print(GMC(data.gmc))
+  }
+}
+
+#lambda1= 0.002 lambda2= 0.01 [1] "SNRPC"   "PDK2"    "NUP88"   "RPP38"   "MYH9"    "UNC119B" "KCTD5"   "CACNB3"  "CASP2"   "TM9SF1" 
+#[1] 0.1930473 0.0883799
+```
+
+###$g(x)=\frac1x$
+```{r}
+lambda1=seq(0.001,0.009,0.001) 
+lambda2 = seq(0.01,0.09,0.01)
+lm.nointer = lm(response ~., data =TP53_o)
+beta.start=as.vector(coef(lm.nointer))
+X=model.matrix(lm.nointer)
+X = 1/X ###################X^3, cos(X), sin(X) 
+for(i in 1:length(lambda1)){
+  for(j in 1: length(lambda2)){ 
+    f<- function(beta){
+      gx = (X%*%beta)
+      e = TP53_o$response-gx
+      ff = var(gx)/(var(gx)+var(e) ) - lambda1[i]*abs(cov(gx, e))-lambda2[j]*sum(abs(beta)) 
+      return(-ff)
+    }
+  o=optim(par=beta.start,f,method="L-BFGS-B")
+  ind.order = order(o$par,decreasing = T)
+  ind.final = ind.order[1:10]
+  X.gmc = X[,ind.final]
+  beta.gmc = o$par[ind.final]
+  gx.gmc = X.gmc%*%beta.gmc
+  data.gmc = cbind(gx.gmc,TP53_o$response)
+  cat(sep = "", "lambda1= ", lambda1[i], " lambda2= ", lambda2[j]) 
+  print(names(coef(lm.nointer)[ind.final]))
+  print(GMC(data.gmc))
+  }
+}
+#lambda1= 0.007 lambda2= 0.09 [1] "UGDH"    "UNC119B" "RYK"     "SLC2A1"  "NUP88"   "BTBD3"   "RAD1"    "PRKRA"   "PDK2"    "TMEM5"  
+#[1] 0.03631872 0.04301661
+```
+###$g(x)=x^2$
+```{r}
+lambda1=seq(0.001,0.009,0.001) 
+lambda2 = seq(0.01,0.09,0.01)
+lm.nointer = lm(response ~., data =TP53_o)
+beta.start=as.vector(coef(lm.nointer))
+X=model.matrix(lm.nointer)
+X = X^2 ###################X^3, cos(X), sin(X) 
+for(i in 1:length(lambda1)){
+  for(j in 1: length(lambda2)){ 
+    f<- function(beta){
+      gx = (X%*%beta)
+      e = TP53_o$response-gx
+      ff = var(gx)/(var(gx)+var(e) ) - lambda1[i]*abs(cov(gx, e))-lambda2[j]*sum(abs(beta)) 
+      return(-ff)
+    }
+  o=optim(par=beta.start,f,method="L-BFGS-B")
+  ind.order = order(o$par,decreasing = T)
+  ind.final = ind.order[1:10]
+  X.gmc = X[,ind.final]
+  beta.gmc = o$par[ind.final]
+  gx.gmc = X.gmc%*%beta.gmc
+  data.gmc = cbind(gx.gmc,TP53_o$response)
+  cat(sep = "", "lambda1= ", lambda1[i], " lambda2= ", lambda2[j]) 
+  print(names(coef(lm.nointer)[ind.final]))
+  print(GMC(data.gmc))
+  }
+}
+#lambda1= 0.007 lambda2= 0.01 [1] "PDK2"    "KCTD5"   "MYH9"    "LYRM2"   "MRPS18A" "JMJD3"   "RPP38"   "NUP88"   "CASP2"   "SLC2A1" 
+#[1] 0.06865822 0.01681354
+```
+###final model
+```{r}
+finalmodel4<-lm(TP53_o$response~TP53_o$JMJD3+TP53_o$MYH9+TP53_o$NUP88+TP53_o$PDK2+TP53_o$TMEM5+TP53_o$KCTD5+TP53_o$SNRPC+TP53_o$RYK+TP53_o$CASP2+TP53_o$UNC119B)
+summary(finalmodel4)
+plot(finalmodel4)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+part(b)
+
+
+
+##Part 2
+##Set_e
+###g(x)=x 
+```{r}
+lambda=c(0.001,0.01,0.1,1,10,100,1000) 
+lm.nointer = lm(response ~., data =data_e)
+beta.start=as.vector(coef(lm.nointer))
+X=model.matrix(lm.nointer)
+X = X ###################X^3, cos(X), sin(X) 
+for(i in 1:length(lambda)){
+  f<- function(beta){
+      gx = (X%*%beta)
+      data.GMC=cbind(data_e$response,gx)
+      ff = GMC(data.GMC)[2]-lambda[i]*sum(abs(beta)) 
+      return(ff)
+      }
+  o=optim(par=beta.start,f,method="L-BFGS-B")
+  ind.order = order(o$par,decreasing = T)
+  ind.final = ind.order[1:10]
+  X.gmc = X[,ind.final]
+  beta.gmc = o$par[ind.final]
+  gx.gmc = X.gmc%*%beta.gmc
+  data.gmc = cbind(gx.gmc,data_e$response)
+  cat(sep = "", "lambda= ", lambda[i]) 
+  print(names(coef(lm.nointer)[ind.final]))
+  print(GMC(data.gmc))
+  }
+#lambda= 0.01 [1] "SPINK1"      "CEL"         "SOX2"        "PYY"         "HABP2"       "BTG1"        "(Intercept)"
+#[8] "RB1CC1"      "CDC37L1"     "UBXD8"      
+#[1] 0.3285067 1.0000000
+```
+
+###$g(x)=exp(x)$ 
+```{r}
+lambda=c(0.001,0.01,0.1,1,10,100,1000) 
+lm.nointer = lm(response ~., data =data_e)
+beta.start=as.vector(coef(lm.nointer))
+X=model.matrix(lm.nointer)
+X = exp(X) ###################X^3, cos(X), sin(X) 
+for(i in 1:length(lambda)){
+  f<- function(beta){
+      gx = (X%*%beta)
+      data.GMC=cbind(data_e$response,gx)
+      ff = GMC(data.GMC)[2]-lambda[i]*sum(abs(beta)) 
+      return(ff)
+      }
+  o=optim(par=beta.start,f,method="L-BFGS-B")
+  ind.order = order(o$par,decreasing = T)
+  ind.final = ind.order[1:10]
+  X.gmc = X[,ind.final]
+  beta.gmc = o$par[ind.final]
+  gx.gmc = X.gmc%*%beta.gmc
+  data.gmc = cbind(gx.gmc,data_e$response)
+  cat(sep = "", "lambda= ", lambda[i]) 
+  print(names(coef(lm.nointer)[ind.final]))
+  print(GMC(data.gmc))
+}
+#lambda= 0.1 [1] "SPINK1"      "CEL"         "SOX2"        "HPCA"        "BTG1"        "CADM3"       "CDC37L1"    
+#[8] "RB1CC1"      "(Intercept)" "PSMA1"      
+#[1] 0.690312 1.000000
+```
+
+###$g(x)=x^3$ 
+```{r}
+lambda=c(0.001,0.01,0.1,1,10,100,1000) 
+lm.nointer = lm(response ~., data =data_e)
+beta.start=as.vector(coef(lm.nointer))
+X=model.matrix(lm.nointer)
+X = (X)^3 ###################X^3, cos(X), sin(X) 
+for(i in 1:length(lambda)){
+  f<- function(beta){
+      gx = (X%*%beta)
+      data.GMC=cbind(data_e$response,gx)
+      ff = GMC(data.GMC)[2]-lambda[i]*sum(abs(beta)) 
+      return(ff)
+      }
+  o=optim(par=beta.start,f,method="L-BFGS-B")
+  ind.order = order(o$par,decreasing = T)
+  ind.final = ind.order[1:10]
+  X.gmc = X[,ind.final]
+  beta.gmc = o$par[ind.final]
+  gx.gmc = X.gmc%*%beta.gmc
+  data.gmc = cbind(gx.gmc,data_e$response)
+  cat(sep = "", "lambda= ", lambda[i]) 
+  print(names(coef(lm.nointer)[ind.final]))
+  print(GMC(data.gmc))
+}
+#lambda= 10 [1] "(Intercept)" "HPCA"        "MYLPF"       "PYY"         "SOX2"        "SPINK1"      "TMEM30A"    
+#[8] "CEL"         "HABP2"       "TMEFF1"     
+#[1] 0.2872726 0.3649257
+```
+
+###$g(x)=\frac1x$
+```{r}
+lambda=c(0.001,0.01,0.1,1,10,100,1000) 
+lm.nointer = lm(response ~., data =data_e)
+beta.start=as.vector(coef(lm.nointer))
+X=model.matrix(lm.nointer)
+X = 1/(X) ###################X^3, cos(X), sin(X) 
+for(i in 1:length(lambda)){
+  f<- function(beta){
+      gx = (X%*%beta)
+      data.GMC=cbind(data_e$response,gx)
+      ff = GMC(data.GMC)[2]-lambda[i]*sum(abs(beta)) 
+      return(ff)
+      }
+  o=optim(par=beta.start,f,method="L-BFGS-B")
+  ind.order = order(o$par,decreasing = T)
+  ind.final = ind.order[1:10]
+  X.gmc = X[,ind.final]
+  beta.gmc = o$par[ind.final]
+  gx.gmc = X.gmc%*%beta.gmc
+  data.gmc = cbind(gx.gmc,data_e$response)
+  cat(sep = "", "lambda= ", lambda[i]) 
+  print(names(coef(lm.nointer)[ind.final]))
+  print(GMC(data.gmc))
+}
+#lambda= 0.001 [1] "PYY"         "HABP2"       "TRIM36"      "CDKN2AIP"    "CADM3"       "CDC37L1"     "TMEFF1"     
+#[8] "TMEM30A"     "(Intercept)" "MYLPF"      
+#[1] 0.2463075 1.0000000
+```
+###$g(x)=x^2$
+```{r}
+lambda=c(0.001,0.01,0.1,1,10,100,1000) 
+lm.nointer = lm(response ~., data =data_e)
+beta.start=as.vector(coef(lm.nointer))
+X=model.matrix(lm.nointer)
+X = X^2 ###################X^3, cos(X), sin(X) 
+for(i in 1:length(lambda)){
+  f<- function(beta){
+      gx = (X%*%beta)
+      data.GMC=cbind(data_e$response,gx)
+      ff = GMC(data.GMC)[2]-lambda[i]*sum(abs(beta)) 
+      return(ff)
+      }
+  o=optim(par=beta.start,f,method="L-BFGS-B")
+  ind.order = order(o$par,decreasing = T)
+  ind.final = ind.order[1:10]
+  X.gmc = X[,ind.final]
+  beta.gmc = o$par[ind.final]
+  gx.gmc = X.gmc%*%beta.gmc
+  data.gmc = cbind(gx.gmc,data_e$response)
+  cat(sep = "", "lambda= ", lambda[i]) 
+  print(names(coef(lm.nointer)[ind.final]))
+  print(GMC(data.gmc))
+}
+#lambda= 0.01 [1] "PYY"      "MYLPF"    "HABP2"    "HPCA"     "TMEM30A"  "MPHOSPH8" "CDKN2AIP" "TRIM36"   "PSMA1"   
+#[10] "CADM3"   
+#[1] 0.2508411 1.0000000
+```
+###final model
+```{r}
+
+finalmodel1<-lm(data_e$response~exp(data_e$SPINK1)+exp(data_e$CEL)+exp(data_e$SOX2)+exp(data_e$HPCA)+exp(data_e$BTG1)+exp(data_e$CADM3)+exp(data_e$CDC37L1)+exp(data_e$RB1CC1)+exp(data_e$PSMA1))
+summary(finalmodel1)
+plot(finalmodel1)
+```
+
+
+
+
+
+
+
+##Set_o
+###g(x)=x 
+```{r}
+lambda=c(0.001,0.01,0.1,1,10,100,1000) 
+lm.nointer = lm(response ~., data =data_o)
+beta.start=as.vector(coef(lm.nointer))
+X=model.matrix(lm.nointer)
+X = X ###################X^3, cos(X), sin(X) 
+for(i in 1:length(lambda)){
+  f<- function(beta){
+      gx = (X%*%beta)
+      data.GMC=cbind(data_o$response,gx)
+      ff = GMC(data.GMC)[2]-lambda[i]*sum(abs(beta)) 
+      return(ff)
+      }
+  o=optim(par=beta.start,f,method="L-BFGS-B")
+  ind.order = order(o$par,decreasing = T)
+  ind.final = ind.order[1:10]
+  X.gmc = X[,ind.final]
+  beta.gmc = o$par[ind.final]
+  gx.gmc = X.gmc%*%beta.gmc
+  data.gmc = cbind(gx.gmc,data_o$response)
+  cat(sep = "", "lambda= ", lambda[i]) 
+  print(names(coef(lm.nointer)[ind.final]))
+  print(GMC(data.gmc))
+  }
+#lambda= 0.01 [1] "CEL"         "SPINK1"      "PYY"         "HABP2"       "SCGB1A1"     "UGDH"        "(Intercept)"
+#[8] "SLC25A23"    "CHORDC1"     "SDK2"       
+#[1] 0.337402 1.000000
+```
+
+###$g(x)=exp(x)$ 
+```{r}
+lambda=c(0.001,0.01,0.1,1,10,100,1000) 
+lm.nointer = lm(response ~., data =data_o)
+beta.start=as.vector(coef(lm.nointer))
+X=model.matrix(lm.nointer)
+X = exp(X) ###################X^3, cos(X), sin(X) 
+for(i in 1:length(lambda)){
+  f<- function(beta){
+      gx = (X%*%beta)
+      data.GMC=cbind(data_o$response,gx)
+      ff = GMC(data.GMC)[2]-lambda[i]*sum(abs(beta)) 
+      return(ff)
+      }
+  o=optim(par=beta.start,f,method="L-BFGS-B")
+  ind.order = order(o$par,decreasing = T)
+  ind.final = ind.order[1:10]
+  X.gmc = X[,ind.final]
+  beta.gmc = o$par[ind.final]
+  gx.gmc = X.gmc%*%beta.gmc
+  data.gmc = cbind(gx.gmc,data_o$response)
+  cat(sep = "", "lambda= ", lambda[i]) 
+  print(names(coef(lm.nointer)[ind.final]))
+  print(GMC(data.gmc))
+}
+#lambda= 10 [1] "(Intercept)" "ITIH1"       "UGDH"        "PYY"         "GJA8"        "GGT1"        "SDK2"       
+#[8] "SPINK1"      "CADM3"       "SLC25A23"   
+#[1] 0.1245866 0.3610808
+```
+
+###$g(x)=x^3$ 
+```{r}
+lambda=c(0.001,0.01,0.1,1,10,100,1000) 
+lm.nointer = lm(response ~., data =data_o)
+beta.start=as.vector(coef(lm.nointer))
+X=model.matrix(lm.nointer)
+X = (X)^3 ###################X^3, cos(X), sin(X) 
+for(i in 1:length(lambda)){
+  f<- function(beta){
+      gx = (X%*%beta)
+      data.GMC=cbind(data_o$response,gx)
+      ff = GMC(data.GMC)[2]-lambda[i]*sum(abs(beta)) 
+      return(ff)
+      }
+  o=optim(par=beta.start,f,method="L-BFGS-B")
+  ind.order = order(o$par,decreasing = T)
+  ind.final = ind.order[1:10]
+  X.gmc = X[,ind.final]
+  beta.gmc = o$par[ind.final]
+  gx.gmc = X.gmc%*%beta.gmc
+  data.gmc = cbind(gx.gmc,data_o$response)
+  cat(sep = "", "lambda= ", lambda[i]) 
+  print(names(coef(lm.nointer)[ind.final]))
+  print(GMC(data.gmc))
+}
+#lambda= 1 [1] "SPINK1"      "CEL"         "UGDH"        "SLC25A23"    "RAD1"        "CHORDC1"     "SDK2"       
+#[8] "NUPL2"       "(Intercept)" "GSN"        
+#[1] 0.6603686 1.0000000
+```
+
+###$g(x)=\frac1x$
+```{r}
+lambda=c(0.001,0.01,0.1,1,10,100,1000) 
+lm.nointer = lm(response ~., data =data_o)
+beta.start=as.vector(coef(lm.nointer))
+X=model.matrix(lm.nointer)
+X = 1/(X) ###################X^3, cos(X), sin(X) 
+for(i in 1:length(lambda)){
+  f<- function(beta){
+      gx = (X%*%beta)
+      data.GMC=cbind(data_o$response,gx)
+      ff = GMC(data.GMC)[2]-lambda[i]*sum(abs(beta)) 
+      return(ff)
+      }
+  o=optim(par=beta.start,f,method="L-BFGS-B")
+  ind.order = order(o$par,decreasing = T)
+  ind.final = ind.order[1:10]
+  X.gmc = X[,ind.final]
+  beta.gmc = o$par[ind.final]
+  gx.gmc = X.gmc%*%beta.gmc
+  data.gmc = cbind(gx.gmc,data_o$response)
+  cat(sep = "", "lambda= ", lambda[i]) 
+  print(names(coef(lm.nointer)[ind.final]))
+  print(GMC(data.gmc))
+}
+#lambda= 0.1 [1] "SDK2"        "HABP2"       "CADM3"       "CHORDC1"     "SCGB1A1"     "(Intercept)" "GSN"        
+#[8] "UGDH"        "ITIH1"       "RAD1"       
+#[1] 0.3500089 1.0000000
+```
+###$g(x)=x^2$
+```{r}
+lambda=c(0.001,0.01,0.1,1,10,100,1000) 
+lm.nointer = lm(response ~., data =data_o)
+beta.start=as.vector(coef(lm.nointer))
+X=model.matrix(lm.nointer)
+X = X^2 ###################X^3, cos(X), sin(X) 
+for(i in 1:length(lambda)){
+  f<- function(beta){
+      gx = (X%*%beta)
+      data.GMC=cbind(data_o$response,gx)
+      ff = GMC(data.GMC)[2]-lambda[i]*sum(abs(beta)) 
+      return(ff)
+      }
+  o=optim(par=beta.start,f,method="L-BFGS-B")
+  ind.order = order(o$par,decreasing = T)
+  ind.final = ind.order[1:10]
+  X.gmc = X[,ind.final]
+  beta.gmc = o$par[ind.final]
+  gx.gmc = X.gmc%*%beta.gmc
+  data.gmc = cbind(gx.gmc,data_o$response)
+  cat(sep = "", "lambda= ", lambda[i]) 
+  print(names(coef(lm.nointer)[ind.final]))
+  print(GMC(data.gmc))
+}
+#lambda= 0.1 [1] "SPINK1"      "CEL"         "UGDH"        "RAD1"        "SLC25A23"    "CHORDC1"     "(Intercept)"
+#[8] "TGDS"        "NUPL2"       "SDK2"       
+#[1] 0.5911118 1.0000000
+```
+###final model
+```{r}
+
+finalmodel2<-lm(data_o$response~data_o$SPINK1^3+data_o$CEL^3+data_o$UGDH^3+data_o$SLC25A23^3+data_o$RAD1^3+data_o$CHORDC1^3+data_o$SDK2^3+data_o$NUPL2^3+data_o$GSN^3)
+summary(finalmodel2)
+plot(finalmodel2)
+```
+
+
+
+
+
+
+
+
+##TP53 Set_e
+###g(x)=x 
+```{r}
+lambda=c(0.001,0.01,0.1,1,10,100,1000) 
+lm.nointer = lm(response ~., data =TP53_e)
+beta.start=as.vector(coef(lm.nointer))
+X=model.matrix(lm.nointer)
+X = X ###################X^3, cos(X), sin(X) 
+for(i in 1:length(lambda)){
+  f<- function(beta){
+      gx = (X%*%beta)
+      data.GMC=cbind(TP53_e$response,gx)
+      ff = GMC(data.GMC)[2]-lambda[i]*sum(abs(beta)) 
+      return(ff)
+      }
+  o=optim(par=beta.start,f,method="L-BFGS-B")
+  ind.order = order(o$par,decreasing = T)
+  ind.final = ind.order[1:10]
+  X.gmc = X[,ind.final]
+  beta.gmc = o$par[ind.final]
+  gx.gmc = X.gmc%*%beta.gmc
+  data.gmc = cbind(gx.gmc,TP53_e$response)
+  cat(sep = "", "lambda= ", lambda[i]) 
+  print(names(coef(lm.nointer)[ind.final]))
+  print(GMC(data.gmc))
+  }
+#lambda= 0.001 [1] "NFYC"        "EXOSC5"      "CEP135"      "BTG1"        "HIST1H4I"    "FOLR3"       "CWF19L1"    
+#[8] "NAG"         "AHI1"        "(Intercept)"
+#[1] 0.2365294 1.0000000
+```
+
+###$g(x)=exp(x)$ 
+```{r}
+lambda=c(0.001,0.01,0.1,1,10,100,1000) 
+lm.nointer = lm(response ~., data =TP53_e)
+beta.start=as.vector(coef(lm.nointer))
+X=model.matrix(lm.nointer)
+X = exp(X) ###################X^3, cos(X), sin(X) 
+for(i in 1:length(lambda)){
+  f<- function(beta){
+      gx = (X%*%beta)
+      data.GMC=cbind(TP53_e$response,gx)
+      ff = GMC(data.GMC)[2]-lambda[i]*sum(abs(beta)) 
+      return(ff)
+      }
+  o=optim(par=beta.start,f,method="L-BFGS-B")
+  ind.order = order(o$par,decreasing = T)
+  ind.final = ind.order[1:10]
+  X.gmc = X[,ind.final]
+  beta.gmc = o$par[ind.final]
+  gx.gmc = X.gmc%*%beta.gmc
+  data.gmc = cbind(gx.gmc,TP53_e$response)
+  cat(sep = "", "lambda= ", lambda[i]) 
+  print(names(coef(lm.nointer)[ind.final]))
+  print(GMC(data.gmc))
+}
+#lambda= 10 [1] "(Intercept)" "TMEM87A"     "FGFR1OP"     "HIST1H4I"    "KIAA0556"    "CWF19L1"     "IFT122"     
+#[8] "CTCF"        "STAT5B"      "CEP135"     
+#[1] 0.1390977 0.1145684
+```
+
+###$g(x)=x^3$ 
+```{r}
+lambda=c(0.001,0.01,0.1,1,10,100,1000) 
+lm.nointer = lm(response ~., data =TP53_e)
+beta.start=as.vector(coef(lm.nointer))
+X=model.matrix(lm.nointer)
+X = (X)^3 ###################X^3, cos(X), sin(X) 
+for(i in 1:length(lambda)){
+  f<- function(beta){
+      gx = (X%*%beta)
+      data.GMC=cbind(TP53_e$response,gx)
+      ff = GMC(data.GMC)[2]-lambda[i]*sum(abs(beta)) 
+      return(ff)
+      }
+  o=optim(par=beta.start,f,method="L-BFGS-B")
+  ind.order = order(o$par,decreasing = T)
+  ind.final = ind.order[1:10]
+  X.gmc = X[,ind.final]
+  beta.gmc = o$par[ind.final]
+  gx.gmc = X.gmc%*%beta.gmc
+  data.gmc = cbind(gx.gmc,TP53_e$response)
+  cat(sep = "", "lambda= ", lambda[i]) 
+  print(names(coef(lm.nointer)[ind.final]))
+  print(GMC(data.gmc))
+}
+#lambda= 10 [1] "(Intercept)" "TMEM87A"     "FGFR1OP"     "HIST1H4I"    "KIAA0556"    "CWF19L1"     "IFT122"     
+#[8] "CTCF"        "STAT5B"      "CEP135"     
+#[1] 0.1342547 0.1170660
+```
+
+###$g(x)=\frac1x$
+```{r}
+lambda=c(0.001,0.01,0.1,1,10,100,1000) 
+lm.nointer = lm(response ~., data =TP53_e)
+beta.start=as.vector(coef(lm.nointer))
+X=model.matrix(lm.nointer)
+X = 1/(X) ###################X^3, cos(X), sin(X) 
+for(i in 1:length(lambda)){
+  f<- function(beta){
+      gx = (X%*%beta)
+      data.GMC=cbind(TP53_e$response,gx)
+      ff = GMC(data.GMC)[2]-lambda[i]*sum(abs(beta)) 
+      return(ff)
+      }
+  o=optim(par=beta.start,f,method="L-BFGS-B")
+  ind.order = order(o$par,decreasing = T)
+  ind.final = ind.order[1:10]
+  X.gmc = X[,ind.final]
+  beta.gmc = o$par[ind.final]
+  gx.gmc = X.gmc%*%beta.gmc
+  data.gmc = cbind(gx.gmc,TP53_e$response)
+  cat(sep = "", "lambda= ", lambda[i]) 
+  print(names(coef(lm.nointer)[ind.final]))
+  print(GMC(data.gmc))
+}
+#lambda= 0.001 [1] "TMEM87A"     "ABCF1"       "FGFR1OP"     "RBBP5"       "IFT122"      "STAT5B"      "BTG1"       
+#[8] "BAT1"        "EXOSC5"      "(Intercept)"
+#[1] 0.02295907 1.00000000
+```
+###$g(x)=x^2$
+```{r}
+lambda=c(0.001,0.01,0.1,1,10,100,1000) 
+lm.nointer = lm(response ~., data =TP53_e)
+beta.start=as.vector(coef(lm.nointer))
+X=model.matrix(lm.nointer)
+X = X^2 ###################X^3, cos(X), sin(X) 
+for(i in 1:length(lambda)){
+  f<- function(beta){
+      gx = (X%*%beta)
+      data.GMC=cbind(TP53_e$response,gx)
+      ff = GMC(data.GMC)[2]-lambda[i]*sum(abs(beta)) 
+      return(ff)
+      }
+  o=optim(par=beta.start,f,method="L-BFGS-B")
+  ind.order = order(o$par,decreasing = T)
+  ind.final = ind.order[1:10]
+  X.gmc = X[,ind.final]
+  beta.gmc = o$par[ind.final]
+  gx.gmc = X.gmc%*%beta.gmc
+  data.gmc = cbind(gx.gmc,TP53_e$response)
+  cat(sep = "", "lambda= ", lambda[i]) 
+  print(names(coef(lm.nointer)[ind.final]))
+  print(GMC(data.gmc))
+}
+#lambda= 0.1 [1] "CTCF"        "TMEM87A"     "NAG"         "ABCF1"       "FGFR1OP"     "HIST1H4I"    "EXOSC5"     
+#[8] "(Intercept)" "BTG1"        "CEP76"      
+#[1] 0.02756474 1.00000000
+```
+###final model
+```{r}
+
+finalmodel3<-lm(TP53_e$response~TP53_e$NFYC+TP53_e$EXOSC5+TP53_e$CEP135+TP53_e$BTG1+TP53_e$HIST1H4I+TP53_e$FOLR3+TP53_e$CWF19L1+TP53_e$NAG+TP53_e$AHI1)
+summary(finalmodel3)
+plot(finalmodel3)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+##TP53 Set_o
+###g(x)=x 
+```{r}
+lambda=c(0.001,0.01,0.1,1,10,100,1000) 
+lm.nointer = lm(response ~., data =TP53_o)
+beta.start=as.vector(coef(lm.nointer))
+X=model.matrix(lm.nointer)
+X = X ###################X^3, cos(X), sin(X) 
+for(i in 1:length(lambda)){
+  f<- function(beta){
+      gx = (X%*%beta)
+      data.GMC=cbind(TP53_o$response,gx)
+      ff = GMC(data.GMC)[2]-lambda[i]*sum(abs(beta)) 
+      return(ff)
+      }
+  o=optim(par=beta.start,f,method="L-BFGS-B")
+  ind.order = order(o$par,decreasing = T)
+  ind.final = ind.order[1:10]
+  X.gmc = X[,ind.final]
+  beta.gmc = o$par[ind.final]
+  gx.gmc = X.gmc%*%beta.gmc
+  data.gmc = cbind(gx.gmc,TP53_o$response)
+  cat(sep = "", "lambda= ", lambda[i]) 
+  print(names(coef(lm.nointer)[ind.final]))
+  print(GMC(data.gmc))
+  }
+#lambda= 10 [1] "(Intercept)" "SNRPC"       "NUP88"       "JMJD3"       "MYH9"        "PDK2"        "RYK"        
+#[8] "CASP2"       "RPP38"       "KCTD5"      
+#[1] 0.3078768 0.1087441
+```
+
+###$g(x)=exp(x)$ 
+```{r}
+lambda=c(0.001,0.01,0.1,1,10,100,1000) 
+lm.nointer = lm(response ~., data =TP53_o)
+beta.start=as.vector(coef(lm.nointer))
+X=model.matrix(lm.nointer)
+X = exp(X) ###################X^3, cos(X), sin(X) 
+for(i in 1:length(lambda)){
+  f<- function(beta){
+      gx = (X%*%beta)
+      data.GMC=cbind(TP53_o$response,gx)
+      ff = GMC(data.GMC)[2]-lambda[i]*sum(abs(beta)) 
+      return(ff)
+      }
+  o=optim(par=beta.start,f,method="L-BFGS-B")
+  ind.order = order(o$par,decreasing = T)
+  ind.final = ind.order[1:10]
+  X.gmc = X[,ind.final]
+  beta.gmc = o$par[ind.final]
+  gx.gmc = X.gmc%*%beta.gmc
+  data.gmc = cbind(gx.gmc,TP53_o$response)
+  cat(sep = "", "lambda= ", lambda[i]) 
+  print(names(coef(lm.nointer)[ind.final]))
+  print(GMC(data.gmc))
+}
+#lambda= 10 [1] "(Intercept)" "SNRPC"       "NUP88"       "JMJD3"       "MYH9"        "PDK2"        "RYK"        
+#[8] "CASP2"       "RPP38"       "KCTD5"      
+#[1] 0.13297034 0.08284986
+```
+
+###$g(x)=x^3$ 
+```{r}
+lambda=c(0.001,0.01,0.1,1,10,100,1000) 
+lm.nointer = lm(response ~., data =TP53_o)
+beta.start=as.vector(coef(lm.nointer))
+X=model.matrix(lm.nointer)
+X = (X)^3 ###################X^3, cos(X), sin(X) 
+for(i in 1:length(lambda)){
+  f<- function(beta){
+      gx = (X%*%beta)
+      data.GMC=cbind(TP53_o$response,gx)
+      ff = GMC(data.GMC)[2]-lambda[i]*sum(abs(beta)) 
+      return(ff)
+      }
+  o=optim(par=beta.start,f,method="L-BFGS-B")
+  ind.order = order(o$par,decreasing = T)
+  ind.final = ind.order[1:10]
+  X.gmc = X[,ind.final]
+  beta.gmc = o$par[ind.final]
+  gx.gmc = X.gmc%*%beta.gmc
+  data.gmc = cbind(gx.gmc,TP53_o$response)
+  cat(sep = "", "lambda= ", lambda[i]) 
+  print(names(coef(lm.nointer)[ind.final]))
+  print(GMC(data.gmc))
+}
+#lambda= 10 [1] "(Intercept)" "SNRPC"       "NUP88"       "JMJD3"       "MYH9"        "PDK2"        "RYK"        
+#[8] "CASP2"       "RPP38"       "KCTD5"      
+#[1] 0.16072633 0.09206792
+```
+
+###$g(x)=\frac1x$
+```{r}
+lambda=c(0.001,0.01,0.1,1,10,100,1000) 
+lm.nointer = lm(response ~., data =TP53_o)
+beta.start=as.vector(coef(lm.nointer))
+X=model.matrix(lm.nointer)
+X = 1/(X) ###################X^3, cos(X), sin(X) 
+for(i in 1:length(lambda)){
+  f<- function(beta){
+      gx = (X%*%beta)
+      data.GMC=cbind(TP53_o$response,gx)
+      ff = GMC(data.GMC)[2]-lambda[i]*sum(abs(beta)) 
+      return(ff)
+      }
+  o=optim(par=beta.start,f,method="L-BFGS-B")
+  ind.order = order(o$par,decreasing = T)
+  ind.final = ind.order[1:10]
+  X.gmc = X[,ind.final]
+  beta.gmc = o$par[ind.final]
+  gx.gmc = X.gmc%*%beta.gmc
+  data.gmc = cbind(gx.gmc,TP53_o$response)
+  cat(sep = "", "lambda= ", lambda[i]) 
+  print(names(coef(lm.nointer)[ind.final]))
+  print(GMC(data.gmc))
+}
+#lambda= 0.001 [1] "NUP88"   "LYRM2"   "RAD1"    "JMJD3"   "RPP38"   "VPS37C"  "UNC119B" "KCTD5"   "MRPL46"  "NGDN"   
+#[1] 0.0164724 1.0000000
+```
+###$g(x)=x^2$
+```{r}
+lambda=c(0.001,0.01,0.1,1,10,100,1000) 
+lm.nointer = lm(response ~., data =TP53_o)
+beta.start=as.vector(coef(lm.nointer))
+X=model.matrix(lm.nointer)
+X = X^2 ###################X^3, cos(X), sin(X) 
+for(i in 1:length(lambda)){
+  f<- function(beta){
+      gx = (X%*%beta)
+      data.GMC=cbind(TP53_o$response,gx)
+      ff = GMC(data.GMC)[2]-lambda[i]*sum(abs(beta)) 
+      return(ff)
+      }
+  o=optim(par=beta.start,f,method="L-BFGS-B")
+  ind.order = order(o$par,decreasing = T)
+  ind.final = ind.order[1:10]
+  X.gmc = X[,ind.final]
+  beta.gmc = o$par[ind.final]
+  gx.gmc = X.gmc%*%beta.gmc
+  data.gmc = cbind(gx.gmc,TP53_o$response)
+  cat(sep = "", "lambda= ", lambda[i]) 
+  print(names(coef(lm.nointer)[ind.final]))
+  print(GMC(data.gmc))
+}
+#lambda= 10 [1] "(Intercept)" "SNRPC"       "NUP88"       "JMJD3"       "MYH9"        "PDK2"        "RYK"        
+#[8] "CASP2"       "RPP38"       "KCTD5"      
+#[1] 0.07807312 0.01218427
+```
+###final model
+```{r}
+finalmodel4<-lm(TP53_o$response~TP53_o$SNRPC+TP53_o$NUP88+TP53_o$JMJD3+TP53_o$MYH9+TP53_o$PDK2+TP53_o$RYK+TP53_o$CASP2+TP53_o$RPP38+TP53_o$KCTD5)
+summary(finalmodel4)
+plot(finalmodel4)
+```
+
+
+
+
+
